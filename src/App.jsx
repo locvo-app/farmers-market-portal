@@ -62,7 +62,7 @@ const App = () => {
   const [formData, setFormData] = useState({
     // Thông tin công ty
     companyName: '', taxId: '', companyAddress: '',
-    // Thông tin người nộp hồ sơ (Mới bổ sung)
+    // Thông tin người nộp hồ sơ
     registrantName: '', registrantPosition: '', registrantPhone: '', registrantEmail: '',
     // Vận hành
     creditTerm: '30', leadTime: '24', moq: '', deliveryType: 'Store',
@@ -166,8 +166,8 @@ const App = () => {
 
   if (!user && view === 'login') {
     return (
-      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white p-12 rounded-[3.5rem] shadow-2xl text-center border border-emerald-50">
+      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4 text-center">
+        <div className="max-w-md w-full bg-white p-12 rounded-[3.5rem] shadow-2xl border border-emerald-50">
            <div className="w-24 h-24 bg-emerald-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl rotate-3"><Leaf size={48} /></div>
            <h1 className="text-3xl font-black text-[#1B4332] mb-10 uppercase tracking-tight italic leading-none">Farmers Market<br/><span className="text-sm tracking-widest opacity-50 font-sans not-italic uppercase">Supplier Hub</span></h1>
            <button onClick={handleGoogleSignIn} className="w-full py-4 bg-white border-2 border-gray-100 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 flex items-center justify-center gap-3 transition-all">
@@ -182,7 +182,7 @@ const App = () => {
   if (showSuccess) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-6 text-center animate-in fade-in">
-        <div className="max-w-xl w-full bg-white p-16 rounded-[4rem] shadow-2xl space-y-8 border border-emerald-50">
+        <div className="max-w-xl w-full bg-white p-16 rounded-[4rem] shadow-2xl space-y-8 border border-emerald-50 text-center">
           <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-lg"><CheckCircle size={60} /></div>
           <div className="space-y-4">
             <h2 className="text-4xl font-black text-[#1B4332] uppercase italic leading-tight">Gửi hồ sơ thành công!</h2>
@@ -264,7 +264,7 @@ const App = () => {
              <div className="mb-14 flex justify-between relative max-w-3xl mx-auto px-6">
                 <div className="absolute top-5 left-12 right-12 h-1 bg-gray-100 -z-0 rounded-full"></div>
                 {[1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="z-10 flex flex-col items-center">
+                  <div key={i} className="z-10 flex flex-col items-center text-center">
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border-2 transition-all duration-300 ${step >= i ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white border-gray-200 text-gray-300'}`}>
                       {step > i ? <CheckCircle2 size={18} /> : i}
                     </div>
@@ -276,14 +276,14 @@ const App = () => {
              </div>
 
              <form className="max-w-4xl mx-auto space-y-12" onSubmit={e => e.preventDefault()}>
-                {/* BƯỚC 1: ĐỐI TÁC - Thông tin Doanh nghiệp & Người nộp hồ sơ */}
+                {/* BƯỚC 1: ĐỐI TÁC */}
                 {step === 1 && (
                   <div className="space-y-12 animate-in fade-in">
                     <div className="space-y-8">
                        <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic border-b border-gray-50 pb-4"><Building2 size={32} className="text-emerald-600"/> Thông tin doanh nghiệp</h3>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                          <div className="space-y-1">
-                           <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Tên Công ty (Theo GPKD) *</label>
+                           <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Tên Công ty (GPKD) *</label>
                            <input type="text" placeholder="Công Ty TNHH..." className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold outline-none shadow-inner transition-all" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} />
                          </div>
                          <div className="space-y-1">
@@ -305,7 +305,7 @@ const App = () => {
                            <input type="text" placeholder="Họ tên đầy đủ" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantName} onChange={e => setFormData({...formData, registrantName: e.target.value})} />
                          </div>
                          <div className="space-y-1">
-                           <label className="text-[10px] font-black text-[#1B4332] uppercase ml-1 flex items-center gap-2"><Briefcase size={12}/> Chức danh / Vị trí *</label>
+                           <label className="text-[10px] font-black text-[#1B4332] uppercase ml-1 flex items-center gap-2"><Briefcase size={12}/> Chức vụ *</label>
                            <input type="text" placeholder="VD: Trưởng phòng Kinh doanh" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantPosition} onChange={e => setFormData({...formData, registrantPosition: e.target.value})} />
                          </div>
                          <div className="space-y-1">
@@ -352,7 +352,7 @@ const App = () => {
                 {step === 3 && (
                   <div className="space-y-8 animate-in fade-in">
                     <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><Clock size={32} className="text-emerald-600"/> 3. Điều kiện thương mại</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-emerald-50/20 p-10 rounded-[3.5rem] border border-emerald-50 shadow-inner">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-emerald-50/20 p-10 rounded-[3.5rem] border border-emerald-50 shadow-inner text-left">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Thời hạn thanh toán công nợ (Ngày) *</label>
                         <select className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none shadow-sm" value={formData.creditTerm} onChange={e => setFormData({...formData, creditTerm: e.target.value})}>
@@ -371,7 +371,7 @@ const App = () => {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Giá trị đơn tối thiểu (MOQ) *</label>
-                        <input type="text" placeholder="VD: 2 Triệu hoặc 10 Thùng" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl outline-none font-bold focus:border-emerald-500 transition-all shadow-sm" value={formData.moq} onChange={e => setFormData({...formData, moq: e.target.value})} />
+                        <input type="text" placeholder="VD: 3 Triệu VNĐ" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl outline-none font-bold focus:border-emerald-500 transition-all shadow-sm" value={formData.moq} onChange={e => setFormData({...formData, moq: e.target.value})} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Hình thức giao hàng *</label>
@@ -384,7 +384,7 @@ const App = () => {
                   </div>
                 )}
 
-                {/* BƯỚC 4: HÀNG HÓA */}
+                {/* BƯỚC 4: HÀNG HÓA - Khắc phục lỗi trắng xoá */}
                 {step === 4 && (
                   <div className="space-y-8 animate-in fade-in">
                     <div className="flex justify-between items-center border-b border-emerald-50 pb-6">
@@ -393,7 +393,7 @@ const App = () => {
                     </div>
                     <div className="space-y-10 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
                       {formData.products.map((p, idx) => (
-                        <div key={p.id} className="p-10 border-2 border-emerald-50 rounded-[4rem] bg-white relative hover:shadow-2xl transition-all border-l-[20px] border-l-emerald-600 shadow-lg">
+                        <div key={p.id} className="p-10 border-2 border-emerald-50 rounded-[4rem] bg-white relative hover:shadow-2xl transition-all border-l-[20px] border-l-emerald-600 shadow-lg text-left">
                           <div className="flex justify-between items-center mb-10">
                             <span className="bg-[#1B4332] text-white text-[11px] font-black px-6 py-2.5 rounded-full uppercase italic tracking-tighter shadow-md">Sản phẩm #{idx + 1}</span>
                             {formData.products.length > 1 && <button type="button" onClick={() => setFormData({...formData, products: formData.products.filter(item => item.id !== p.id)})} className="text-red-300 hover:text-red-500 transition-colors"><Trash2 size={24}/></button>}
@@ -410,20 +410,20 @@ const App = () => {
                                </select>
                             </div>
                             <div className="space-y-1">
-                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá mua (VNĐ) *</label>
+                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá mua (Vốn) *</label>
                                <input type="number" placeholder="Vốn nhập" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none transition-all" value={p.costPrice} onChange={e => updateProduct(p.id, 'costPrice', e.target.value)} />
                             </div>
                             <div className="space-y-1">
-                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá bán lẻ (VNĐ) *</label>
+                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá bán lẻ *</label>
                                <input type="number" placeholder="Bán tại kệ" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none transition-all" value={p.sellingPrice} onChange={e => updateProduct(p.id, 'sellingPrice', e.target.value)} />
                             </div>
                             <div className="p-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex items-center justify-between font-black text-emerald-800 uppercase tracking-tighter italic shadow-sm">
-                              <span>Lợi nhuận gộp:</span>
+                              <span>LN Gộp dự kiến:</span>
                               <span className="text-2xl font-black">{p.costPrice && p.sellingPrice ? Math.round(((p.sellingPrice - p.costPrice) / p.sellingPrice) * 100) : 0}%</span>
                             </div>
 
                             <div className="md:col-span-3 space-y-1 border-t border-gray-50 pt-6 mt-2">
-                               <label className="text-[10px] font-black text-gray-400 uppercase block mb-2">Đã từng cung ứng cho hệ thống siêu thị nào? (Winmart, Lotte, Coop...)</label>
+                               <label className="text-[10px] font-black text-gray-400 uppercase block mb-2">Đã từng cung ứng cho siêu thị nào? (Winmart, Lotte, Coop...)</label>
                                <input type="text" placeholder="Ghi tên các đối tác phân phối hiện tại (nếu có)" className="w-full p-5 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm outline-none shadow-inner transition-all" value={p.existingDistribution} onChange={e => updateProduct(p.id, 'existingDistribution', e.target.value)} />
                             </div>
 
@@ -431,17 +431,17 @@ const App = () => {
                             <div className="md:col-span-3 grid grid-cols-2 gap-6 mt-4">
                                <div className="space-y-3">
                                   <label className="text-[10px] font-black text-[#1B4332] uppercase flex items-center gap-1.5"><FileText size={14}/> Hồ sơ công bố / VietGAP *</label>
-                                  <label className="w-full py-8 border-2 border-dashed border-emerald-100 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-500 transition-all group shadow-sm bg-gray-50/20">
+                                  <label className="w-full py-8 border-2 border-dashed border-emerald-100 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-500 transition-all group shadow-sm bg-gray-50/20 text-center px-4">
                                      <FileUp size={28} className="text-emerald-200 group-hover:text-emerald-600 animate-pulse"/>
-                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase text-center px-6 leading-tight group-hover:text-emerald-800">{p.complianceDoc || 'Chọn tệp PDF'}</span>
+                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase leading-tight group-hover:text-emerald-800">{p.complianceDoc || 'Chọn tệp PDF'}</span>
                                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'complianceDoc', p.id)} />
                                   </label>
                                </div>
                                <div className="space-y-3">
-                                  <label className="text-[10px] font-black text-[#1B4332] uppercase flex items-center gap-1.5"><ImageIcon size={14}/> Hình ảnh thực tế sản phẩm *</label>
-                                  <label className="w-full py-8 border-2 border-dashed border-emerald-100 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-500 transition-all group shadow-sm bg-gray-50/20">
+                                  <label className="text-[10px] font-black text-[#1B4332] uppercase flex items-center gap-1.5"><ImageIcon size={14}/> Hình ảnh sản phẩm *</label>
+                                  <label className="w-full py-8 border-2 border-dashed border-emerald-100 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-500 transition-all group shadow-sm bg-gray-50/20 text-center px-4">
                                      <ImageIcon size={28} className="text-emerald-200 group-hover:text-emerald-600"/>
-                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase text-center px-6 leading-tight group-hover:text-emerald-800">{p.productImage || 'Chọn Ảnh thực tế'}</span>
+                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase leading-tight group-hover:text-emerald-800">{p.productImage || 'Chọn Ảnh thực tế'}</span>
                                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'productImage', p.id)} />
                                   </label>
                                </div>
@@ -470,7 +470,7 @@ const App = () => {
                   </button>
                   <div className="flex gap-4">
                     {step < 5 ? (
-                      <button type="button" onClick={handleNext} className="bg-emerald-600 text-white px-14 py-5 rounded-[2rem] font-black shadow-xl hover:bg-emerald-700 transition-all uppercase text-[10px] tracking-widest flex items-center gap-2">Tiếp tục <ChevronRight size={16}/></button>
+                      <button type="button" onClick={handleNext} className="bg-emerald-600 text-white px-14 py-5 rounded-[2rem] font-black shadow-xl hover:bg-emerald-700 transition-all uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-emerald-900/20">Tiếp tục <ChevronRight size={16}/></button>
                     ) : (
                       <button 
                         type="button" 

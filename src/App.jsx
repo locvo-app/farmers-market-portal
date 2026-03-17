@@ -58,19 +58,15 @@ const App = () => {
   const [errorMsg, setErrorMsg] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Form State chi tiết theo yêu cầu 7-Eleven
+  // Form State chuẩn 7-Eleven
   const [formData, setFormData] = useState({
-    // Thông tin công ty
     companyName: '', taxId: '', companyAddress: '',
-    // Thông tin người nộp hồ sơ
     registrantName: '', registrantPosition: '', registrantPhone: '', registrantEmail: '',
-    // Vận hành
     creditTerm: '30', leadTime: '24', moq: '', deliveryType: 'Store',
     legalDocs: {
       businessLicense: { name: '', file: null },
       safetyCert: { name: '', file: null }
     },
-    // Hàng hóa chuyên sâu
     products: [{ 
       id: Date.now(), name: '', category: '', costPrice: '', sellingPrice: '', 
       origin: '', existingDistribution: '', complianceDoc: null, productImage: null 
@@ -110,6 +106,13 @@ const App = () => {
     }));
   };
 
+  const addProduct = () => {
+    setFormData(prev => ({
+      ...prev,
+      products: [...prev.products, { id: Date.now(), name: '', category: '', costPrice: '', sellingPrice: '', origin: '', existingDistribution: '', complianceDoc: null, productImage: null }]
+    }));
+  };
+
   const handleFileUpload = (e, target, productId = null) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -135,7 +138,6 @@ const App = () => {
         status: 'NOP_HO_SO',
         createdAt: serverTimestamp(),
       };
-      
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), data);
       setShowSuccess(true);
       setLoading(false);
@@ -162,12 +164,12 @@ const App = () => {
   const handleNext = () => setStep(prev => Math.min(prev + 1, 5));
   const handleBack = () => setStep(prev => Math.max(prev - 1, 1));
 
-  // --- UI Components ---
+  // --- Views ---
 
   if (!user && view === 'login') {
     return (
-      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4 text-center">
-        <div className="max-w-md w-full bg-white p-12 rounded-[3.5rem] shadow-2xl border border-emerald-50">
+      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white p-12 rounded-[3.5rem] shadow-2xl text-center border border-emerald-50">
            <div className="w-24 h-24 bg-emerald-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl rotate-3"><Leaf size={48} /></div>
            <h1 className="text-3xl font-black text-[#1B4332] mb-10 uppercase tracking-tight italic leading-none">Farmers Market<br/><span className="text-sm tracking-widest opacity-50 font-sans not-italic uppercase">Supplier Hub</span></h1>
            <button onClick={handleGoogleSignIn} className="w-full py-4 bg-white border-2 border-gray-100 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 flex items-center justify-center gap-3 transition-all">
@@ -182,7 +184,7 @@ const App = () => {
   if (showSuccess) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-6 text-center animate-in fade-in">
-        <div className="max-w-xl w-full bg-white p-16 rounded-[4rem] shadow-2xl space-y-8 border border-emerald-50 text-center">
+        <div className="max-w-xl w-full bg-white p-16 rounded-[4rem] shadow-2xl space-y-8 border border-emerald-50">
           <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-lg"><CheckCircle size={60} /></div>
           <div className="space-y-4">
             <h2 className="text-4xl font-black text-[#1B4332] uppercase italic leading-tight">Gửi hồ sơ thành công!</h2>
@@ -200,10 +202,10 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans antialiased">
       {loading && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex items-center justify-center text-center">
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex items-center justify-center">
           <div className="animate-bounce bg-emerald-600 p-5 rounded-[2rem] text-white shadow-2xl flex flex-col items-center gap-3">
              <Loader2 size={40} className="animate-spin" />
-             <span className="text-[10px] font-black uppercase tracking-widest px-4">Đang kết nối Cloud...</span>
+             <span className="text-[10px] font-black uppercase tracking-widest px-4">Đang xử lý Cloud...</span>
           </div>
         </div>
       )}
@@ -240,7 +242,7 @@ const App = () => {
                 ) : (
                   submissions.filter(s => s.userId === user?.uid).map(sub => (
                     <div key={sub.id} className="p-8 flex justify-between items-center hover:bg-emerald-50/10 transition-all group">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <div className="flex items-center gap-2">
                           <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Đang thẩm định</span>
                         </div>
@@ -260,7 +262,6 @@ const App = () => {
 
         {view === 'supplier_form' && (
           <div className="bg-white rounded-[3.5rem] shadow-2xl border border-emerald-50 p-10 md:p-16 animate-in slide-in-from-bottom-4">
-             {/* Progress Steps */}
              <div className="mb-14 flex justify-between relative max-w-3xl mx-auto px-6">
                 <div className="absolute top-5 left-12 right-12 h-1 bg-gray-100 -z-0 rounded-full"></div>
                 {[1, 2, 3, 4, 5].map(i => (
@@ -276,12 +277,11 @@ const App = () => {
              </div>
 
              <form className="max-w-4xl mx-auto space-y-12" onSubmit={e => e.preventDefault()}>
-                {/* BƯỚC 1: ĐỐI TÁC */}
                 {step === 1 && (
                   <div className="space-y-12 animate-in fade-in">
                     <div className="space-y-8">
                        <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic border-b border-gray-50 pb-4"><Building2 size={32} className="text-emerald-600"/> Thông tin doanh nghiệp</h3>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                          <div className="space-y-1">
                            <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Tên Công ty (GPKD) *</label>
                            <input type="text" placeholder="Công Ty TNHH..." className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold outline-none shadow-inner transition-all" value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} />
@@ -292,17 +292,17 @@ const App = () => {
                          </div>
                          <div className="md:col-span-2 space-y-1">
                            <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Địa chỉ trụ sở chính *</label>
-                           <input type="text" placeholder="Số nhà, Tên đường, Quận, Thành phố..." className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold outline-none shadow-inner transition-all" value={formData.companyAddress} onChange={e => setFormData({...formData, companyAddress: e.target.value})} />
+                           <input type="text" placeholder="Địa chỉ đăng ký kinh doanh..." className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold outline-none shadow-inner transition-all" value={formData.companyAddress} onChange={e => setFormData({...formData, companyAddress: e.target.value})} />
                          </div>
                        </div>
                     </div>
 
                     <div className="space-y-8 bg-emerald-50/40 p-8 rounded-[3rem] border border-emerald-50 shadow-inner">
                        <h3 className="text-xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><User size={24} className="text-emerald-600"/> Thông tin người nộp hồ sơ</h3>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                          <div className="space-y-1">
                            <label className="text-[10px] font-black text-[#1B4332] uppercase ml-1 flex items-center gap-2"><User size={12}/> Họ và tên *</label>
-                           <input type="text" placeholder="Họ tên đầy đủ" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantName} onChange={e => setFormData({...formData, registrantName: e.target.value})} />
+                           <input type="text" placeholder="Họ tên người liên hệ" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantName} onChange={e => setFormData({...formData, registrantName: e.target.value})} />
                          </div>
                          <div className="space-y-1">
                            <label className="text-[10px] font-black text-[#1B4332] uppercase ml-1 flex items-center gap-2"><Briefcase size={12}/> Chức vụ *</label>
@@ -314,18 +314,17 @@ const App = () => {
                          </div>
                          <div className="space-y-1">
                            <label className="text-[10px] font-black text-[#1B4332] uppercase ml-1 flex items-center gap-2"><Mail size={12}/> Email liên hệ *</label>
-                           <input type="email" placeholder="example@mail.com" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantEmail} onChange={e => setFormData({...formData, registrantEmail: e.target.value})} />
+                           <input type="email" placeholder="example@domain.com" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantEmail} onChange={e => setFormData({...formData, registrantEmail: e.target.value})} />
                          </div>
                        </div>
                     </div>
                   </div>
                 )}
 
-                {/* BƯỚC 2: HỒ SƠ PHÁP LÝ */}
                 {step === 2 && (
                   <div className="space-y-8 animate-in fade-in">
                     <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><FileText size={32} className="text-emerald-600"/> 2. Hồ sơ & Pháp lý</h3>
-                    <div className="grid grid-cols-1 gap-5">
+                    <div className="grid grid-cols-1 gap-5 text-left">
                       {[
                         { key: 'businessLicense', label: 'Giấy phép Kinh doanh / Giấy phép thành lập *' },
                         { key: 'safetyCert', label: 'Chứng nhận VSATTP / ISO / HACCP *' }
@@ -339,7 +338,7 @@ const App = () => {
                               </div>
                            </div>
                            <label className="cursor-pointer px-6 py-3 bg-white border-2 border-gray-100 text-[10px] font-black uppercase rounded-2xl hover:bg-emerald-50 transition-all flex items-center gap-2 shadow-sm">
-                              <FileUp size={16}/> {formData.legalDocs[item.key].name ? 'Thay đổi' : 'Tải file Scan'}
+                              <FileUp size={16}/> {formData.legalDocs[item.key].name ? 'Thay đổi file' : 'Tải file Scan'}
                               <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, item.key)} />
                            </label>
                         </div>
@@ -348,7 +347,6 @@ const App = () => {
                   </div>
                 )}
 
-                {/* BƯỚC 3: VẬN HÀNH */}
                 {step === 3 && (
                   <div className="space-y-8 animate-in fade-in">
                     <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><Clock size={32} className="text-emerald-600"/> 3. Điều kiện thương mại</h3>
@@ -364,14 +362,14 @@ const App = () => {
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Lead-time Giao hàng (Giờ) *</label>
                         <select className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none shadow-sm" value={formData.leadTime} onChange={e => setFormData({...formData, leadTime: e.target.value})}>
-                          <option value="12">Trong 12h (Hàng Tươi Tươi)</option>
+                          <option value="12">Trong 12h (Hàng Tươi Sống)</option>
                           <option value="24">Trong 24h (Chuẩn)</option>
                           <option value="48">Trong 48h</option>
                         </select>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Giá trị đơn tối thiểu (MOQ) *</label>
-                        <input type="text" placeholder="VD: 3 Triệu VNĐ" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl outline-none font-bold focus:border-emerald-500 transition-all shadow-sm" value={formData.moq} onChange={e => setFormData({...formData, moq: e.target.value})} />
+                        <input type="text" placeholder="VD: 3 Triệu hoặc 10 Thùng" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl outline-none font-bold focus:border-emerald-500 transition-all shadow-sm" value={formData.moq} onChange={e => setFormData({...formData, moq: e.target.value})} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Hình thức giao hàng *</label>
@@ -384,7 +382,7 @@ const App = () => {
                   </div>
                 )}
 
-                {/* BƯỚC 4: HÀNG HÓA - Khắc phục lỗi trắng xoá */}
+                {/* BƯỚC 4: HÀNG HÓA - Khắc phục triệt để lỗi */}
                 {step === 4 && (
                   <div className="space-y-8 animate-in fade-in">
                     <div className="flex justify-between items-center border-b border-emerald-50 pb-6">
@@ -410,12 +408,12 @@ const App = () => {
                                </select>
                             </div>
                             <div className="space-y-1">
-                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá mua (Vốn) *</label>
-                               <input type="number" placeholder="Vốn nhập" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none transition-all" value={p.costPrice} onChange={e => updateProduct(p.id, 'costPrice', e.target.value)} />
+                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá mua (Vốn nhập) *</label>
+                               <input type="number" placeholder="VNĐ" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none transition-all" value={p.costPrice} onChange={e => updateProduct(p.id, 'costPrice', e.target.value)} />
                             </div>
                             <div className="space-y-1">
-                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá bán lẻ *</label>
-                               <input type="number" placeholder="Bán tại kệ" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none transition-all" value={p.sellingPrice} onChange={e => updateProduct(p.id, 'sellingPrice', e.target.value)} />
+                               <label className="text-[10px] font-black text-gray-400 uppercase">Giá bán lẻ đề xuất *</label>
+                               <input type="number" placeholder="VNĐ" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none transition-all" value={p.sellingPrice} onChange={e => updateProduct(p.id, 'sellingPrice', e.target.value)} />
                             </div>
                             <div className="p-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex items-center justify-between font-black text-emerald-800 uppercase tracking-tighter italic shadow-sm">
                               <span>LN Gộp dự kiến:</span>
@@ -427,7 +425,6 @@ const App = () => {
                                <input type="text" placeholder="Ghi tên các đối tác phân phối hiện tại (nếu có)" className="w-full p-5 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm outline-none shadow-inner transition-all" value={p.existingDistribution} onChange={e => updateProduct(p.id, 'existingDistribution', e.target.value)} />
                             </div>
 
-                            {/* Tải tệp Hàng hóa */}
                             <div className="md:col-span-3 grid grid-cols-2 gap-6 mt-4">
                                <div className="space-y-3">
                                   <label className="text-[10px] font-black text-[#1B4332] uppercase flex items-center gap-1.5"><FileText size={14}/> Hồ sơ công bố / VietGAP *</label>
@@ -453,13 +450,12 @@ const App = () => {
                   </div>
                 )}
 
-                {/* BƯỚC 5: CAM KẾT */}
                 {step === 5 && (
                   <div className="text-center py-20 space-y-10 animate-in zoom-in-95">
                     <div className="w-32 h-32 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-2xl relative border-4 border-white"><ShieldCheck size={70} className="relative z-10" /></div>
                     <h3 className="text-4xl font-black text-[#1B4332] tracking-tight uppercase italic leading-none">Xác nhận nộp hồ sơ<br/><span className="text-sm opacity-50 uppercase tracking-widest font-sans not-italic">Farmers Market Cloud Hub</span></h3>
                     <div className="max-w-md mx-auto p-8 bg-emerald-50/50 rounded-[3rem] border-2 border-dashed border-emerald-200 text-sm italic text-emerald-900 font-medium">
-                       "Tôi cam đoan các thông tin công ty, người đại diện {formData.registrantName} và chi tiết sản phẩm là chính xác. Tôi chịu hoàn toàn trách nhiệm về tính pháp lý của toàn bộ hồ sơ."
+                       "Tôi cam đoan các thông tin công ty, người đại diện {formData.registrantName} và chi tiết sản phẩm là chính xác. Tôi chịu hoàn toàn trách nhiệm về tính pháp lý của toàn bộ hồ sơ nộp đi."
                     </div>
                   </div>
                 )}
@@ -488,7 +484,7 @@ const App = () => {
         )}
       </main>
       <footer className="py-14 text-center text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] border-t border-emerald-50 bg-white italic opacity-70">
-        © 2024 FARMERS MARKET • CLOUD HUB v5.4.1 • SRM INFRASTRUCTURE
+        © 2024 FARMERS MARKET • CLOUD HUB v5.4.5 • SRM INFRASTRUCTURE
       </footer>
     </div>
   );

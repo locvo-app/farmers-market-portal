@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -23,22 +23,7 @@ import {
   User, Briefcase, Phone, Mail, CheckCircle, ShoppingBag
 } from 'lucide-react';
 
-// --- 1. Cấu hình ---
-const STATUS_CONFIG = {
-  'NOP_HO_SO': { label: 'Hồ sơ mới', color: 'bg-gray-100 text-gray-600', icon: <History size={14}/> },
-  'DANG_THAM_DINH': { label: 'Đang thẩm định', color: 'bg-emerald-100 text-emerald-600', icon: <Search size={14}/> },
-  'DA_DUYET': { label: 'Đối tác chính thức', color: 'bg-green-600 text-white', icon: <CheckCircle2 size={14}/> },
-};
-
-const MD_STRUCTURE = {
-  MD1: { name: "MD1 - Nông Sản Tươi", categories: ["Trái Cây Việt", "Trái Cây Nhập", "Rau Củ Quả Tươi"] },
-  MD2: { name: "MD2 - Thực Phẩm Tươi Sống", categories: ["Thịt Tươi", "Thủy Hải Sản", "Trứng & Đồ Mát"] },
-  MD3: { name: "MD3 - Đồ Khô & Gia Vị", categories: ["Đồ Khô", "Hạt & Trái Cây Khô", "Gia Vị & Đồ Đóng Hộp"] },
-};
-
-const ALL_CATEGORIES = Object.values(MD_STRUCTURE).flatMap(md => md.categories);
-
-// --- 2. Khởi tạo Firebase ---
+// --- 1. Cấu hình Firebase ---
 const firebaseConfig = {
   apiKey: "AIzaSyDl0PXFoLm5pv5m8aNHW6VLwrxDs0byzCA",
   authDomain: "farmers-market-portal.firebaseapp.com",
@@ -55,6 +40,15 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
+// --- 2. Danh mục ngành hàng ---
+const MD_STRUCTURE = {
+  MD1: { name: "MD1 - Nông Sản Tươi", categories: ["Trái Cây Việt", "Trái Cây Nhập", "Rau Củ Quả Tươi"] },
+  MD2: { name: "MD2 - Thực Phẩm Tươi Sống", categories: ["Thịt Tươi", "Thủy Hải Sản", "Trứng & Đồ Mát"] },
+  MD3: { name: "MD3 - Đồ Khô & Gia Vị", categories: ["Đồ Khô", "Hạt & Trái Cây Khô", "Gia Vị & Đồ Đóng Hộp"] },
+};
+
+const ALL_CATEGORIES = Object.values(MD_STRUCTURE).flatMap(md => md.categories);
+
 const App = () => {
   const [user, setUser] = useState(null);
   const [view, setView] = useState('login'); 
@@ -66,13 +60,17 @@ const App = () => {
 
   // Form State chi tiết theo yêu cầu 7-Eleven
   const [formData, setFormData] = useState({
+    // Thông tin công ty
     companyName: '', taxId: '', companyAddress: '',
+    // Thông tin người nộp hồ sơ (Mới bổ sung)
     registrantName: '', registrantPosition: '', registrantPhone: '', registrantEmail: '',
+    // Vận hành
     creditTerm: '30', leadTime: '24', moq: '', deliveryType: 'Store',
     legalDocs: {
       businessLicense: { name: '', file: null },
       safetyCert: { name: '', file: null }
     },
+    // Hàng hóa chuyên sâu
     products: [{ 
       id: Date.now(), name: '', category: '', costPrice: '', sellingPrice: '', 
       origin: '', existingDistribution: '', complianceDoc: null, productImage: null 
@@ -112,13 +110,6 @@ const App = () => {
     }));
   };
 
-  const addProduct = () => {
-    setFormData(prev => ({
-      ...prev,
-      products: [...prev.products, { id: Date.now(), name: '', category: '', costPrice: '', sellingPrice: '', origin: '', existingDistribution: '', complianceDoc: null, productImage: null }]
-    }));
-  };
-
   const handleFileUpload = (e, target, productId = null) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -147,15 +138,15 @@ const App = () => {
       
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), data);
       setShowSuccess(true);
+      setLoading(false);
     } catch (err) { 
       console.error("Submit error:", err);
       setErrorMsg("Lỗi khi gửi hồ sơ: " + err.message);
-    } finally {
       setLoading(false);
     }
   };
 
-  const resetToDashboard = () => {
+  const resetForm = () => {
     setShowSuccess(false);
     setView('supplier_dashboard');
     setStep(1);
@@ -171,14 +162,14 @@ const App = () => {
   const handleNext = () => setStep(prev => Math.min(prev + 1, 5));
   const handleBack = () => setStep(prev => Math.max(prev - 1, 1));
 
-  // --- UI Render ---
+  // --- UI Components ---
 
   if (!user && view === 'login') {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white p-12 rounded-[3.5rem] shadow-2xl text-center border border-emerald-50 animate-in zoom-in duration-300">
+        <div className="max-w-md w-full bg-white p-12 rounded-[3.5rem] shadow-2xl text-center border border-emerald-50">
            <div className="w-24 h-24 bg-emerald-600 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl rotate-3"><Leaf size={48} /></div>
-           <h1 className="text-3xl font-black text-[#1B4332] mb-10 uppercase tracking-tight italic leading-none">Farmers Market<br/><span className="text-sm tracking-widest opacity-50 font-sans not-italic">Supplier Hub</span></h1>
+           <h1 className="text-3xl font-black text-[#1B4332] mb-10 uppercase tracking-tight italic leading-none">Farmers Market<br/><span className="text-sm tracking-widest opacity-50 font-sans not-italic uppercase">Supplier Hub</span></h1>
            <button onClick={handleGoogleSignIn} className="w-full py-4 bg-white border-2 border-gray-100 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 flex items-center justify-center gap-3 transition-all">
              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" className="w-5 h-5" />
              Tiếp tục với Google
@@ -200,7 +191,7 @@ const App = () => {
               Hệ thống đã ghi nhận hồ sơ chào hàng của bạn. Bộ phận MD sẽ kiểm tra và phản hồi trực tiếp qua email/số điện thoại nếu sản phẩm phù hợp với định hướng kinh doanh hiện tại.
             </p>
           </div>
-          <button onClick={resetToDashboard} className="px-12 py-5 bg-[#1B4332] text-white rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl hover:bg-black transition-all">Quay lại Dashboard</button>
+          <button onClick={resetForm} className="px-12 py-5 bg-[#1B4332] text-white rounded-[2rem] font-black uppercase text-xs tracking-widest shadow-2xl hover:bg-black transition-all">Quay lại Dashboard</button>
         </div>
       </div>
     );
@@ -209,25 +200,20 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans antialiased">
       {loading && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex items-center justify-center">
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex items-center justify-center text-center">
           <div className="animate-bounce bg-emerald-600 p-5 rounded-[2rem] text-white shadow-2xl flex flex-col items-center gap-3">
              <Loader2 size={40} className="animate-spin" />
-             <span className="text-[10px] font-black uppercase tracking-widest">Đang kết nối Cloud...</span>
+             <span className="text-[10px] font-black uppercase tracking-widest px-4">Đang kết nối Cloud...</span>
           </div>
         </div>
       )}
 
       <nav className="bg-white/80 backdrop-blur-md border-b border-emerald-50 px-8 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('supplier_dashboard')}>
-          <div className="bg-emerald-600 w-10 h-10 rounded-xl text-white flex items-center justify-center shadow-lg"><Leaf size={22}/></div>
+          <div className="bg-emerald-600 w-10 h-10 rounded-xl text-white flex items-center justify-center shadow-lg shadow-emerald-100"><Leaf size={22}/></div>
           <span className="font-black text-[#1B4332] text-xl tracking-tighter italic uppercase">Farmers Market</span>
         </div>
-        {user && (
-          <div className="flex items-center gap-4">
-             <span className="text-[10px] font-bold text-emerald-800 hidden sm:block italic underline">{user.email}</span>
-             <button onClick={() => signOut(auth)} className="w-10 h-10 bg-gray-50 border border-emerald-50 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-500 transition-all shadow-inner"><LogOut size={20}/></button>
-          </div>
-        )}
+        {user && <button onClick={() => signOut(auth)} className="w-10 h-10 bg-gray-50 border border-emerald-50 rounded-xl flex items-center justify-center text-gray-400 hover:text-red-500 transition-all shadow-inner"><LogOut size={20}/></button>}
       </nav>
 
       <main className="flex-1 p-4 md:p-10 max-w-7xl mx-auto w-full">
@@ -237,16 +223,16 @@ const App = () => {
               <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Leaf size={150}/></div>
               <div className="relative z-10 text-center md:text-left">
                 <h2 className="text-4xl font-black mb-2 uppercase italic tracking-tight leading-none">Xin chào!</h2>
-                <p className="text-emerald-200 font-medium">Bắt đầu nộp hồ sơ sản phẩm mới vào hệ thống Farmers Market.</p>
+                <p className="text-emerald-200">Chào mừng bạn nộp hồ sơ sản phẩm mới vào hệ thống Farmers Market.</p>
               </div>
               <button onClick={() => { setView('supplier_form'); setStep(1); }} className="relative z-10 bg-white text-[#1B4332] px-10 py-5 rounded-[2rem] font-black uppercase text-xs shadow-2xl hover:bg-emerald-50 transition-all">
-                Chào sản phẩm mới
+                Chào hàng mới
               </button>
             </div>
 
             <div className="bg-white rounded-[3rem] shadow-xl border border-emerald-50 overflow-hidden">
               <div className="px-10 py-6 border-b border-emerald-50 bg-[#FDFBF7] font-black text-emerald-800 uppercase text-[10px] tracking-widest flex items-center gap-2">
-                <History size={16}/> Danh sách hồ sơ đã gửi
+                <History size={16}/> Lịch sử hồ sơ Cloud
               </div>
               <div className="divide-y divide-emerald-50">
                 {submissions.filter(s => s.userId === user?.uid).length === 0 ? (
@@ -256,10 +242,10 @@ const App = () => {
                     <div key={sub.id} className="p-8 flex justify-between items-center hover:bg-emerald-50/10 transition-all group">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          {sub.status === 'DA_DUYET' ? <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1"><CheckCircle2 size={12}/> Đối tác</span> : <span className="bg-gray-100 text-gray-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Đang thẩm định</span>}
+                          <span className="bg-emerald-600 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Đang thẩm định</span>
                         </div>
                         <h4 className="text-2xl font-bold text-[#1B4332] uppercase tracking-tight">{sub.companyName}</h4>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest italic opacity-70">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                            Mã hồ sơ: #{sub.id.slice(-6).toUpperCase()} • Gửi ngày: {sub.createdAt ? new Date(sub.createdAt.seconds * 1000).toLocaleDateString('vi-VN') : 'Vừa gửi'}
                         </p>
                       </div>
@@ -274,6 +260,7 @@ const App = () => {
 
         {view === 'supplier_form' && (
           <div className="bg-white rounded-[3.5rem] shadow-2xl border border-emerald-50 p-10 md:p-16 animate-in slide-in-from-bottom-4">
+             {/* Progress Steps */}
              <div className="mb-14 flex justify-between relative max-w-3xl mx-auto px-6">
                 <div className="absolute top-5 left-12 right-12 h-1 bg-gray-100 -z-0 rounded-full"></div>
                 {[1, 2, 3, 4, 5].map(i => (
@@ -289,7 +276,7 @@ const App = () => {
              </div>
 
              <form className="max-w-4xl mx-auto space-y-12" onSubmit={e => e.preventDefault()}>
-                {/* BƯỚC 1: ĐỐI TÁC - Thông tin Doanh nghiệp & Người nộp */}
+                {/* BƯỚC 1: ĐỐI TÁC - Thông tin Doanh nghiệp & Người nộp hồ sơ */}
                 {step === 1 && (
                   <div className="space-y-12 animate-in fade-in">
                     <div className="space-y-8">
@@ -326,8 +313,8 @@ const App = () => {
                            <input type="tel" placeholder="09xxx..." className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantPhone} onChange={e => setFormData({...formData, registrantPhone: e.target.value})} />
                          </div>
                          <div className="space-y-1">
-                           <label className="text-[10px] font-black text-[#1B4332] uppercase ml-1 flex items-center gap-2"><Mail size={12}/> Email cá nhân/công ty *</label>
-                           <input type="email" placeholder="example@gmail.com" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantEmail} onChange={e => setFormData({...formData, registrantEmail: e.target.value})} />
+                           <label className="text-[10px] font-black text-[#1B4332] uppercase ml-1 flex items-center gap-2"><Mail size={12}/> Email liên hệ *</label>
+                           <input type="email" placeholder="example@mail.com" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none transition-all shadow-sm" value={formData.registrantEmail} onChange={e => setFormData({...formData, registrantEmail: e.target.value})} />
                          </div>
                        </div>
                     </div>
@@ -352,7 +339,7 @@ const App = () => {
                               </div>
                            </div>
                            <label className="cursor-pointer px-6 py-3 bg-white border-2 border-gray-100 text-[10px] font-black uppercase rounded-2xl hover:bg-emerald-50 transition-all flex items-center gap-2 shadow-sm">
-                              <FileUp size={16}/> {formData.legalDocs[item.key].name ? 'Thay đổi file' : 'Tải file Scan'}
+                              <FileUp size={16}/> {formData.legalDocs[item.key].name ? 'Thay đổi' : 'Tải file Scan'}
                               <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, item.key)} />
                            </label>
                         </div>
@@ -361,13 +348,13 @@ const App = () => {
                   </div>
                 )}
 
-                {/* BƯỚC 3: VẬN HÀNH (Đã khôi phục đầy đủ) */}
+                {/* BƯỚC 3: VẬN HÀNH */}
                 {step === 3 && (
                   <div className="space-y-8 animate-in fade-in">
                     <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><Clock size={32} className="text-emerald-600"/> 3. Điều kiện thương mại</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-emerald-50/20 p-10 rounded-[3.5rem] border border-emerald-50 shadow-inner">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 flex items-center gap-2">Thời hạn thanh toán công nợ (Ngày) *</label>
+                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Thời hạn thanh toán công nợ (Ngày) *</label>
                         <select className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none shadow-sm" value={formData.creditTerm} onChange={e => setFormData({...formData, creditTerm: e.target.value})}>
                           <option value="15">15 ngày làm việc</option>
                           <option value="30">30 ngày làm việc (Chuẩn)</option>
@@ -375,16 +362,16 @@ const App = () => {
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1 flex items-center gap-2">Lead-time Giao hàng (Giờ) *</label>
+                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Lead-time Giao hàng (Giờ) *</label>
                         <select className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl focus:border-emerald-500 font-bold outline-none shadow-sm" value={formData.leadTime} onChange={e => setFormData({...formData, leadTime: e.target.value})}>
-                          <option value="12">Trong 12h (Hàng Tươi Sống)</option>
+                          <option value="12">Trong 12h (Hàng Tươi Tươi)</option>
                           <option value="24">Trong 24h (Chuẩn)</option>
                           <option value="48">Trong 48h</option>
                         </select>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Giá trị đơn tối thiểu (MOQ) *</label>
-                        <input type="text" placeholder="VD: 3 Triệu hoặc 10 Thùng" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl outline-none font-bold focus:border-emerald-500 transition-all shadow-sm" value={formData.moq} onChange={e => setFormData({...formData, moq: e.target.value})} />
+                        <input type="text" placeholder="VD: 2 Triệu hoặc 10 Thùng" className="w-full p-4 bg-white border-2 border-emerald-100 rounded-2xl outline-none font-bold focus:border-emerald-500 transition-all shadow-sm" value={formData.moq} onChange={e => setFormData({...formData, moq: e.target.value})} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Hình thức giao hàng *</label>
@@ -397,12 +384,12 @@ const App = () => {
                   </div>
                 )}
 
-                {/* BƯỚC 4: HÀNG HÓA - Đầy đủ các trường chi tiết */}
+                {/* BƯỚC 4: HÀNG HÓA */}
                 {step === 4 && (
                   <div className="space-y-8 animate-in fade-in">
                     <div className="flex justify-between items-center border-b border-emerald-50 pb-6">
                       <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 uppercase italic leading-none"><Package size={32} className="text-emerald-600"/> 4. Danh mục sản phẩm</h3>
-                      <button type="button" onClick={addProduct} className="bg-[#1B4332] text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-xl"><Plus size={18}/> Thêm dòng</button>
+                      <button type="button" onClick={addProduct} className="bg-[#1B4332] text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-xl"><Plus size={18}/> Thêm hàng</button>
                     </div>
                     <div className="space-y-10 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
                       {formData.products.map((p, idx) => (
@@ -431,7 +418,7 @@ const App = () => {
                                <input type="number" placeholder="Bán tại kệ" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none transition-all" value={p.sellingPrice} onChange={e => updateProduct(p.id, 'sellingPrice', e.target.value)} />
                             </div>
                             <div className="p-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex items-center justify-between font-black text-emerald-800 uppercase tracking-tighter italic shadow-sm">
-                              <span>LN Gộp dự kiến:</span>
+                              <span>Lợi nhuận gộp:</span>
                               <span className="text-2xl font-black">{p.costPrice && p.sellingPrice ? Math.round(((p.sellingPrice - p.costPrice) / p.sellingPrice) * 100) : 0}%</span>
                             </div>
 
@@ -446,7 +433,7 @@ const App = () => {
                                   <label className="text-[10px] font-black text-[#1B4332] uppercase flex items-center gap-1.5"><FileText size={14}/> Hồ sơ công bố / VietGAP *</label>
                                   <label className="w-full py-8 border-2 border-dashed border-emerald-100 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-500 transition-all group shadow-sm bg-gray-50/20">
                                      <FileUp size={28} className="text-emerald-200 group-hover:text-emerald-600 animate-pulse"/>
-                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase text-center px-6 leading-tight group-hover:text-emerald-800">{p.complianceDoc || 'Chọn tệp PDF hồ sơ công bố'}</span>
+                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase text-center px-6 leading-tight group-hover:text-emerald-800">{p.complianceDoc || 'Chọn tệp PDF'}</span>
                                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'complianceDoc', p.id)} />
                                   </label>
                                </div>
@@ -454,7 +441,7 @@ const App = () => {
                                   <label className="text-[10px] font-black text-[#1B4332] uppercase flex items-center gap-1.5"><ImageIcon size={14}/> Hình ảnh thực tế sản phẩm *</label>
                                   <label className="w-full py-8 border-2 border-dashed border-emerald-100 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-500 transition-all group shadow-sm bg-gray-50/20">
                                      <ImageIcon size={28} className="text-emerald-200 group-hover:text-emerald-600"/>
-                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase text-center px-6 leading-tight group-hover:text-emerald-800">{p.productImage || 'Chọn Ảnh thực tế (JPG/PNG)'}</span>
+                                     <span className="text-[10px] font-black text-gray-400 mt-2 uppercase text-center px-6 leading-tight group-hover:text-emerald-800">{p.productImage || 'Chọn Ảnh thực tế'}</span>
                                      <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'productImage', p.id)} />
                                   </label>
                                </div>
@@ -471,10 +458,8 @@ const App = () => {
                   <div className="text-center py-20 space-y-10 animate-in zoom-in-95">
                     <div className="w-32 h-32 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-2xl relative border-4 border-white"><ShieldCheck size={70} className="relative z-10" /></div>
                     <h3 className="text-4xl font-black text-[#1B4332] tracking-tight uppercase italic leading-none">Xác nhận nộp hồ sơ<br/><span className="text-sm opacity-50 uppercase tracking-widest font-sans not-italic">Farmers Market Cloud Hub</span></h3>
-                    <div className="max-w-md mx-auto p-8 bg-emerald-50/50 rounded-[3rem] border-2 border-dashed border-emerald-200">
-                       <p className="text-sm text-emerald-900 font-medium leading-relaxed italic">
-                         "Bằng việc nhấn nút gửi hồ sơ dưới đây, tôi cam đoan các thông tin công ty, người đại diện {formData.registrantName} và chi tiết sản phẩm là chính xác. Tôi chịu hoàn toàn trách nhiệm về tính pháp lý của toàn bộ hồ sơ."
-                       </p>
+                    <div className="max-w-md mx-auto p-8 bg-emerald-50/50 rounded-[3rem] border-2 border-dashed border-emerald-200 text-sm italic text-emerald-900 font-medium">
+                       "Tôi cam đoan các thông tin công ty, người đại diện {formData.registrantName} và chi tiết sản phẩm là chính xác. Tôi chịu hoàn toàn trách nhiệm về tính pháp lý của toàn bộ hồ sơ."
                     </div>
                   </div>
                 )}
@@ -485,7 +470,7 @@ const App = () => {
                   </button>
                   <div className="flex gap-4">
                     {step < 5 ? (
-                      <button type="button" onClick={handleNext} className="bg-emerald-600 text-white px-14 py-5 rounded-[2rem] font-black shadow-xl hover:bg-emerald-700 transition-all uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-emerald-900/20">Tiếp tục <ChevronRight size={16}/></button>
+                      <button type="button" onClick={handleNext} className="bg-emerald-600 text-white px-14 py-5 rounded-[2rem] font-black shadow-xl hover:bg-emerald-700 transition-all uppercase text-[10px] tracking-widest flex items-center gap-2">Tiếp tục <ChevronRight size={16}/></button>
                     ) : (
                       <button 
                         type="button" 
@@ -503,7 +488,7 @@ const App = () => {
         )}
       </main>
       <footer className="py-14 text-center text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] border-t border-emerald-50 bg-white italic opacity-70">
-        © 2024 FARMERS MARKET • CLOUD HUB v5.4.0 • SRM INFRASTRUCTURE
+        © 2024 FARMERS MARKET • CLOUD HUB v5.4.1 • SRM INFRASTRUCTURE
       </footer>
     </div>
   );

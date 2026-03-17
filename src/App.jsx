@@ -104,7 +104,7 @@ const App = () => {
       setSubmissions(docs);
     }, (error) => {
       console.error("Firestore sync error:", error);
-      setErrorMsg("Lỗi đồng bộ dữ liệu: " + error.message);
+      setErrorMsg("Lỗi đồng bộ dữ liệu Cloud. Hãy kiểm tra Firestore Database đã được bật chưa.");
     });
     return () => unsubscribe();
   }, [user]);
@@ -118,6 +118,8 @@ const App = () => {
       console.error("Login error:", err);
       if (err.code === 'auth/unauthorized-domain') {
         setErrorMsg("Tên miền chưa được cấp phép. Vui lòng thêm 'usercontent.goog' vào Authorized Domains trong Firebase Console.");
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setErrorMsg("Tính năng 'Đăng nhập bằng Google' chưa được bật. Bạn hãy vào Firebase Console > Authentication > Sign-in method để bật lên.");
       } else {
         setErrorMsg("Lỗi đăng nhập: " + err.message); 
       }
@@ -172,12 +174,10 @@ const App = () => {
         createdAt: serverTimestamp(),
       };
       
-      // Ghi dữ liệu vào đường dẫn quy định
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'submissions'), data);
       
       setView('supplier_dashboard');
       setStep(1);
-      // Reset form
       setFormData({
         companyName: '', taxId: '', email: '', phone: '', address: '',
         creditTerm: '30', leadTime: '24', moq: '', deliveryType: 'Store',
@@ -212,8 +212,8 @@ const App = () => {
              Tiếp tục với Google
            </button>
            {errorMsg && (
-             <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-[10px] font-bold leading-relaxed mb-4">
-               {errorMsg}
+             <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-[10px] font-bold leading-relaxed mb-4 animate-pulse">
+               Lỗi: {errorMsg}
              </div>
            )}
            <button onClick={() => setView('admin_dashboard')} className="text-emerald-700 font-bold text-[10px] uppercase tracking-widest hover:underline mt-4">Hệ thống MD Nội bộ</button>
@@ -228,7 +228,7 @@ const App = () => {
         <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex items-center justify-center">
           <div className="animate-bounce bg-emerald-600 p-5 rounded-[2rem] text-white shadow-2xl flex flex-col items-center gap-3 text-center">
              <Loader2 size={40} className="animate-spin" />
-             <span className="text-[10px] font-black uppercase tracking-widest px-4">Đang xử lý dữ liệu Cloud...</span>
+             <span className="text-[10px] font-black uppercase tracking-widest px-4">Đang kết nối Cloud...</span>
           </div>
         </div>
       )}
@@ -260,8 +260,8 @@ const App = () => {
             <div className="bg-[#1B4332] p-12 rounded-[3.5rem] text-white flex flex-col md:flex-row justify-between items-center gap-6 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12"><Leaf size={150}/></div>
               <div className="relative z-10 text-center md:text-left">
-                <h2 className="text-4xl font-black tracking-tight mb-2 uppercase italic">Xin chào Đối tác!</h2>
-                <p className="text-emerald-200">Bắt đầu nộp hồ sơ và theo dõi kết quả thẩm định từ MD.</p>
+                <h2 className="text-4xl font-black tracking-tight mb-2 uppercase italic leading-none">Xin chào Đối tác!</h2>
+                <p className="text-emerald-200">Bắt đầu nộp hồ sơ và theo dõi tiến độ thẩm định từ bộ phận MD.</p>
               </div>
               <button onClick={() => { setView('supplier_form'); setStep(1); }} className="relative z-10 bg-white text-[#1B4332] px-10 py-5 rounded-[2rem] font-black uppercase text-xs shadow-2xl hover:bg-emerald-50 transition-all">
                 Chào sản phẩm mới
@@ -270,19 +270,19 @@ const App = () => {
 
             <div className="bg-white rounded-[3rem] shadow-xl border border-emerald-50 overflow-hidden">
               <div className="px-10 py-6 border-b border-emerald-50 bg-[#FDFBF7] font-black text-emerald-800 uppercase text-[10px] tracking-widest flex items-center gap-2">
-                <History size={16}/> Lịch sử nộp hồ sơ của bạn
+                <History size={16}/> Danh sách hồ sơ Cloud
               </div>
               <div className="divide-y divide-emerald-50">
                 {submissions.filter(s => s.userId === user?.uid).length === 0 ? (
-                  <div className="p-24 text-center text-gray-300 font-bold italic uppercase tracking-widest text-[10px] opacity-50">Chưa có dữ liệu trên Cloud</div>
+                  <div className="p-24 text-center text-gray-300 font-bold italic uppercase tracking-widest text-[10px] opacity-50">Hệ thống đang trống dữ liệu</div>
                 ) : (
                   submissions.filter(s => s.userId === user?.uid).map(sub => (
-                    <div key={sub.id} className="p-8 flex justify-between items-center hover:bg-emerald-50/5 transition-all group">
+                    <div key={sub.id} className="p-8 flex justify-between items-center hover:bg-emerald-50/10 transition-all group">
                       <div className="space-y-2">
                         <StatusBadge status={sub.status} />
                         <h4 className="text-2xl font-bold text-[#1B4332] uppercase tracking-tight">{sub.companyName}</h4>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest italic opacity-70">
-                           ID: #{sub.id.slice(-6).toUpperCase()} • Ngày gửi: {sub.createdAt ? new Date(sub.createdAt.seconds * 1000).toLocaleDateString('vi-VN') : 'Mới'}
+                           Mã số: #{sub.id.slice(-6).toUpperCase()} • Gửi ngày: {sub.createdAt ? new Date(sub.createdAt.seconds * 1000).toLocaleDateString('vi-VN') : 'Đang xử lý'}
                         </p>
                       </div>
                       <button className="w-14 h-14 bg-[#F0F5F2] text-emerald-600 rounded-2xl flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm"><Eye size={24}/></button>
@@ -296,7 +296,6 @@ const App = () => {
 
         {view === 'supplier_form' && (
           <div className="bg-white rounded-[3.5rem] shadow-2xl border border-emerald-50 p-10 md:p-16 animate-in slide-in-from-bottom-4">
-             {/* Progress Steps */}
              <div className="mb-14 flex justify-between relative max-w-3xl mx-auto px-6">
                 <div className="absolute top-5 left-12 right-12 h-1 bg-gray-100 -z-0 rounded-full"></div>
                 {[1, 2, 3, 4, 5].map(i => (
@@ -338,15 +337,15 @@ const App = () => {
 
                 {step === 2 && (
                   <div className="space-y-8 animate-in fade-in">
-                    <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><FileText size={32} className="text-emerald-600"/> 2. Hồ sơ pháp lý</h3>
+                    <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><FileText size={32} className="text-emerald-600"/> 2. Hồ sơ & Pháp lý</h3>
                     <div className="grid grid-cols-1 gap-5">
-                      {['Giấy phép KD', 'Chứng nhận ATTP', 'VietGAP/Organic'].map(label => (
+                      {['Giấy phép Kinh doanh', 'Chứng nhận ATTP', 'Hồ sơ Công bố'].map(label => (
                         <div key={label} className="p-6 border-2 border-gray-50 rounded-[2.5rem] bg-gray-50/30 flex justify-between items-center group hover:bg-white hover:border-emerald-200 transition-all">
                            <div className="flex items-center gap-4 text-[#1B4332]">
                               <div className="bg-emerald-50 p-3 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all"><FileText size={20}/></div>
                               <span className="font-black uppercase text-xs tracking-widest">{label}</span>
                            </div>
-                           <button type="button" className="px-5 py-2.5 bg-white border-2 border-gray-100 text-[10px] font-black uppercase rounded-2xl hover:bg-emerald-50 transition-all flex items-center gap-2"><FileUp size={16}/> Tải file Scan</button>
+                           <button type="button" className="px-5 py-2.5 bg-white border-2 border-gray-100 text-[10px] font-black uppercase rounded-2xl hover:bg-emerald-50 transition-all flex items-center gap-2 shadow-sm"><FileUp size={16}/> Tải bản Scan</button>
                         </div>
                       ))}
                     </div>
@@ -356,7 +355,7 @@ const App = () => {
                 {step === 4 && (
                   <div className="space-y-8 animate-in fade-in">
                     <div className="flex justify-between items-center border-b border-emerald-50 pb-6">
-                      <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><Package size={32} className="text-emerald-600"/> 4. Danh mục hàng hóa</h3>
+                      <h3 className="text-2xl font-black text-[#1B4332] flex items-center gap-3 tracking-tight uppercase italic"><Package size={32} className="text-emerald-600"/> 4. Danh mục sản phẩm</h3>
                       <button type="button" onClick={addProduct} className="bg-[#1B4332] text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-800 shadow-xl transition-all"><Plus size={18}/> Thêm dòng</button>
                     </div>
                     <div className="space-y-8 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
@@ -380,7 +379,7 @@ const App = () => {
                                <input type="number" placeholder="VNĐ" className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 font-bold text-sm shadow-inner outline-none" value={p.sellingPrice} onChange={e => updateProduct(p.id, 'sellingPrice', e.target.value)} />
                             </div>
                             <div className="p-4 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex items-center justify-between font-black text-emerald-800 uppercase tracking-tighter italic">
-                              <span>Biên LN:</span>
+                              <span>Margin dự tính:</span>
                               <span className="text-xl font-black">{p.costPrice && p.sellingPrice ? Math.round(((p.sellingPrice - p.costPrice) / p.sellingPrice) * 100) : 0}%</span>
                             </div>
                           </div>
@@ -404,7 +403,7 @@ const App = () => {
                     {step < 5 ? (
                       <button type="button" onClick={handleNext} className="bg-emerald-600 text-white px-14 py-5 rounded-[2rem] font-black shadow-xl hover:bg-emerald-700 transition-all uppercase text-[10px] tracking-widest flex items-center gap-2">Tiếp tục <ChevronRight size={16}/></button>
                     ) : (
-                      <button type="button" onClick={submitRegistration} disabled={loading} className="bg-[#1B4332] text-white px-16 py-6 rounded-[2rem] font-black shadow-2xl hover:bg-black transition-all flex items-center gap-3 uppercase text-xs italic tracking-widest">Gửi hồ sơ ngay <TrendingUp size={24}/></button>
+                      <button type="button" onClick={submitRegistration} disabled={loading} className="bg-[#1B4332] text-white px-16 py-6 rounded-[2rem] font-black shadow-2xl hover:bg-black transition-all flex items-center gap-3 uppercase text-xs italic tracking-widest">Xác nhận gửi <TrendingUp size={24}/></button>
                     )}
                   </div>
                 </div>
@@ -424,7 +423,7 @@ const App = () => {
 
              <div className="bg-white rounded-[4rem] border border-emerald-50 shadow-2xl overflow-hidden">
                 <table className="w-full text-left border-collapse">
-                  <thead><tr className="bg-[#FDFBF7] text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-emerald-50"><th className="px-12 py-8">Nhà cung cấp</th><th className="px-12 py-8 text-center">Trạng thái</th><th className="px-12 py-8 text-center">Xử lý MD</th></tr></thead>
+                  <thead><tr className="bg-[#FDFBF7] text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-emerald-50"><th className="px-12 py-8">Nhà cung cấp / Email</th><th className="px-12 py-8 text-center">Trạng thái</th><th className="px-12 py-8 text-center">Xử lý MD</th></tr></thead>
                   <tbody className="divide-y divide-emerald-50">
                     {submissions.length === 0 ? (
                       <tr><td colSpan="3" className="p-32 text-center text-gray-300 font-black italic tracking-widest uppercase text-xs opacity-50">Dữ liệu Cloud đang trống</td></tr>
@@ -452,7 +451,7 @@ const App = () => {
         )}
       </main>
       <footer className="py-14 text-center text-[10px] font-black text-gray-300 uppercase tracking-[0.4em] border-t border-emerald-50 bg-white">
-        © 2024 FARMERS MARKET • CLOUD HUB v5.1.0
+        © 2024 FARMERS MARKET • CLOUD HUB v5.1.1
       </footer>
     </div>
   );
